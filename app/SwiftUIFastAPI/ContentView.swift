@@ -9,14 +9,37 @@
 import SwiftUI
 
 struct ContentView: View {
+    
+    private let apiClient = TestAPIClient()
+    
+    @State private var tasks: [TaskResponse] = []
+    
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        List(tasks, id: \.id) { task in
+            HStack {
+                Text(task.title)
+                Spacer()
+                if task.done {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.green)
+                }
+            }
         }
-        .padding()
+        .onAppear {
+            getTasks()
+        }
+    }
+    
+    private func getTasks() {
+        Task {
+            let result = await apiClient.fetchTasks()
+            switch result {
+            case .success(let tasksReponse):
+                self.tasks = tasksReponse
+            case .failure(let error):
+                print("[ERROR] \(error)")
+            }
+        }
     }
 }
 

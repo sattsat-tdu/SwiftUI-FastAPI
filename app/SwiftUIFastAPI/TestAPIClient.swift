@@ -10,9 +10,14 @@ import Foundation
 
 struct TestAPIClient {
     
-    private let baseURL = URL(string: "http://localhost:8000")!
-    //自分のipアドレスにすることで、問題解決
-    
+//    private let baseURL = URL(string: "http://localhost:8000")!
+    private let baseURL: URL
+
+    init() {
+        let ipAddress = ProcessInfo.processInfo.environment["IP_ADDRESS"] ?? "localhost"
+        self.baseURL = URL(string: "http://\(ipAddress):8000")!
+    }
+
     
     func fetchTasks() async -> Result<TasksResponse, TestAPIClientError> {
         

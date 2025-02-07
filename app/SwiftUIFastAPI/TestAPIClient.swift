@@ -60,4 +60,71 @@ struct TestAPIClient {
             return .failure(.urlSessionError(.unknown(error)))
         }
     }
+    
+    func updateTaskDoneState(taskId: Int, isDone: Bool) async -> Result<Void, TestAPIClientError> {
+        let url = baseURL.appending(path: "/tasks/\(taskId)/done")
+
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = isDone ? "PUT" : "DELETE"
+        urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        do {
+            let (_, response) = try await URLSession.shared.data(for: urlRequest)
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                return .failure(.parseError)
+            }
+            return .success(())
+        } catch {
+            return .failure(.urlSessionError(.unknown(error)))
+        }
+    }
+    
+    func deleteTask(taskId: Int) async -> Result<Void, TestAPIClientError> {
+        let url = baseURL.appending(path: "/tasks/\(taskId)/")
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "DELETE"
+        urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        do {
+            let (_, response) = try await URLSession.shared.data(for: urlRequest)
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                return .failure(.parseError)
+            }
+            return .success(())
+        } catch {
+            return .failure(.urlSessionError(.unknown(error)))
+        }
+    }
+    
+    func createTask(request: TaskRequest) async -> Result<TaskCreateResponse, TestAPIClientError> {
+        let url = baseURL.appending(path: "/tasks")
+
+        var urlRequest = URLRequest(url: url)
+        urlRequest.httpMethod = "POST"
+        urlRequest.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        
+        let requestBody = ["title": request.title]
+        do {
+            urlRequest.httpBody = try JSONEncoder().encode(requestBody)
+        } catch {
+            print("[ERROR] エンコードに失敗")
+            return .failure(.parseError)
+        }
+        
+        do {
+            let (data, response) = try await URLSession.shared.data(for: urlRequest)
+            guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+                print("[ERROR] 1")
+                return .failure(.parseError)
+            }
+            do {
+                let taskCreateResponse = try JSONDecoder().decode(TaskCreateResponse.self, from: data)
+                return .success(taskCreateResponse)
+            } catch {
+                return .failure(.parseError)
+            }
+        } catch {
+            return .failure(.urlSessionError(.unknown(error)))
+        }
+    }
 }

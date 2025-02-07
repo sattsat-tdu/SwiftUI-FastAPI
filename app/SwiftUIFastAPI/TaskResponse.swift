@@ -13,5 +13,5 @@ typealias TasksResponse = [TaskResponse]
 struct TaskResponse: Decodable {
     let title: String
     let id: Int
-    let done: Bool
+    var done: Bool
 }
